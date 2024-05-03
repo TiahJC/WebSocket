@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+</head>
+<body>
+    <h1>WebSocket Client</h1>
+    <input type="text" id="messageInput" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+    
+    <ul id="messages"></ul>
+
+    <script>
+        const ws = new WebSocket('wss://localhost:8080', 'echo-protocol', {
+            ca: '../RootCA.pem', // Replace 'ca-cert.pem' with the path to your CA certificate
+            key: '../SysA.key',
+            cert: '../SysA.pem',
+            rejectUnauthorized: false
+        });
+
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            const messages = document.getElementById('messages');
+            const li = document.createElement('li');
+
+            if (event.data instanceof Blob) {
+                // If the message is a Blob, convert it to text
+                const reader = new FileReader();
+                reader.onload = function() {
+                    li.textContent = reader.result;
+                };
+                reader.readAsText(event.data);
+            } else {
+                // If the message is not a Blob, simply display it
+                li.textContent = event.data;
+            }
+            
+            messages.appendChild(li);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            ws.send(message);
+            messageInput.value = '';
+        }
+    </script>
+</body>
+</html>
